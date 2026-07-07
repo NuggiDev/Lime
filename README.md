@@ -1,7 +1,6 @@
 # <span style="color:#32d583">Lime</span>
 
 <p>
-  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/NuggiDev/Lime/ci.yml?branch=main&style=for-the-badge&label=CI&logo=github">
   <img alt="Language" src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus">
   <img alt="Build" src="https://img.shields.io/badge/build-CMake-064F8C?style=for-the-badge&logo=cmake">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-32d583?style=for-the-badge">

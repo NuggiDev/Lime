@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-smoke-test:
+    name: Build and smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Smoke test scaffolder
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $candidates = @(
+            'build/Release/Lime.exe',
+            'build/Debug/Lime.exe',
+            'build/Lime.exe',
+            'build/Lime'
+          )
+
+          $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $exe) {
+            throw 'Could not find built Lime executable.'
+          }
+
+          & $exe --help
+
+          $languages = @(
+            'java',
+            'cpp',
+            'c',
+            'csharp',
+            'typescript',
+            'ruby',
+            'go',
+            'javascript',
+            'rust',
+            'python'
+          )
+
+          foreach ($language in $languages) {
+            $target = Join-Path 'ci-output' "$language-demo"
+            & $exe init $language $target
+
+            foreach ($commonFile in @('README.md', '.gitignore')) {
+              $path = Join-Path $target $commonFile
+              if (-not (Test-Path $path)) {
+                throw "Missing $path"
+              }
+            }
+          }
+
+          $expectedFiles = @(
+            'ci-output/java-demo/pom.xml',
+            'ci-output/cpp-demo/CMakeLists.txt',
+            'ci-output/c-demo/CMakeLists.txt',
+            'ci-output/csharp-demo/csharp_demo.csproj',
+            'ci-output/typescript-demo/package.json',
+            'ci-output/typescript-demo/tsconfig.json',
+            'ci-output/ruby-demo/Gemfile',
+            'ci-output/ruby-demo/Rakefile',
+            'ci-output/go-demo/go.mod',
+            'ci-output/javascript-demo/package.json',
+            'ci-output/rust-demo/Cargo.toml',
+            'ci-output/python-demo/pyproject.toml'
+          )
+
+          foreach ($path in $expectedFiles) {
+            if (-not (Test-Path $path)) {
+              throw "Missing expected generated file: $path"
+            }
+          }
+
+          & $exe init js ci-output/overwrite-check
+          $PSNativeCommandUseErrorActionPreference = $false
+          $overwrite = & $exe init js ci-output/overwrite-check 2>&1
+          if ($LASTEXITCODE -eq 0) {
+            throw 'Overwrite protection failed: second init unexpectedly succeeded.'
+          }
+          if (($overwrite -join "`n") -notmatch 'refusing to overwrite') {
+            throw "Overwrite protection failed with unexpected output: $overwrite"
+          }
+
+

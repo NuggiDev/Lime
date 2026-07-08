@@ -1,4 +1,4 @@
-# <span style="color:#32d583">Lime</span>
+# <span style="color:#32d583">Lime™</span>
 
 <p>
   <img alt="Language" src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus">
